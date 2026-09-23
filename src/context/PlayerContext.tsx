@@ -23,6 +23,8 @@ type PlayerCtx = {
   toggleMute: () => void;
   toggleShuffle: () => void;
   cycleRepeat: () => void;
+  npOpen: boolean;
+  setNpOpen: (open: boolean) => void;
 };
 
 // Updated ~4x/sec while audio plays. Kept in its own context so only the
@@ -58,6 +60,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [muted, setMuted] = useState(false);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState<RepeatMode>("off");
+  const [npOpen, setNpOpen] = useState(true);
 
   const repeatRef = useRef(repeat);
   repeatRef.current = repeat;
@@ -432,9 +435,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     () => ({
       queue, index, current, isPlaying, volume, muted,
       shuffle, repeat, playTracks, playTrack, toggle, next, prev,
-      setVolume, toggleMute, toggleShuffle, cycleRepeat,
+      setVolume, toggleMute, toggleShuffle, cycleRepeat, npOpen, setNpOpen,
     }),
-    [queue, index, current, isPlaying, volume, muted, shuffle, repeat, playTracks, playTrack, toggle, next, prev, setVolume, toggleMute, toggleShuffle, cycleRepeat]
+    [queue, index, current, isPlaying, volume, muted, shuffle, repeat, playTracks, playTrack, toggle, next, prev, setVolume, toggleMute, toggleShuffle, cycleRepeat, npOpen]
   );
 
   const progressValue = useMemo<ProgressCtx>(

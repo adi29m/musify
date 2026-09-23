@@ -1,11 +1,15 @@
 import { Suspense } from "react";
+import Link from "next/link";
+import { MicVocal } from "lucide-react";
 import { getTrending, getTrendingPlaylists, GENRES, playlistArt } from "@/lib/audius";
 import { getPopularMusic } from "@/lib/youtube";
 import { Section, GenreGrid } from "@/components/Section";
-import { HomeClient } from "./HomeClient";
-import Link from "next/link";
+import { TrackShelf } from "@/components/TrackShelf";
+import { QuickGrid } from "@/components/QuickGrid";
 
 export const revalidate = 600;
+
+type Filter = "all" | "music" | "podcasts";
 
 function TrendingSkeleton() {
   return (
@@ -17,17 +21,6 @@ function TrendingSkeleton() {
             <div className="mb-3 aspect-square w-full animate-pulse rounded-md bg-zinc-800" />
             <div className="mb-1 h-4 w-3/4 animate-pulse rounded bg-zinc-800" />
             <div className="h-3 w-1/2 animate-pulse rounded bg-zinc-800" />
-          </div>
-        ))}
-      </div>
-      <div className="grid gap-1 lg:grid-cols-2">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-md px-3 py-2">
-            <div className="h-10 w-10 animate-pulse rounded bg-zinc-800" />
-            <div className="flex-1">
-              <div className="mb-1 h-4 w-2/3 animate-pulse rounded bg-zinc-800" />
-              <div className="h-3 w-1/3 animate-pulse rounded bg-zinc-800" />
-            </div>
           </div>
         ))}
       </div>
@@ -48,21 +41,60 @@ function PlaylistsSkeleton() {
   );
 }
 
-async function TrendingSection() {
-  const trending = await getTrending(30).catch(() => []);
+function QuickSkeleton() {
   return (
-    <Section title="Trending now — all artists & bands">
-      <HomeClient tracks={trending} />
-    </Section>
+    <div className="mb-8 grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="h-16 animate-pulse rounded-md bg-zinc-800 sm:h-20" />
+      ))}
+    </div>
   );
+}
+
+function Pills({ active }: { active: Filter }) {
+  const pill = (key: Filter, label: string) => (
+    <Link
+      key={key}
+      href={key === "all" ? "/" : `/?filter=${key}`}
+      className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+        active === key ? "bg-white text-black" : "bg-white/10 text-white hover:bg-white/20"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+  return (
+    <div className="mb-4 flex gap-2">
+      {pill("all", "All")}
+      {pill("music", "Music")}
+      {pill("podcasts", "Podcasts")}
+    </div>
+  );
+}
+
+async function QuickSection() {
+  const [trending, popular] = await Promise.all([
+    getTrending(20).catch(() => []),
+    getPopularMusic(12).catch(() => []),
+  ]);
+  return <QuickGrid audius={trending} popular={popular} />;
 }
 
 async function PopularSection() {
   const popular = await getPopularMusic(12).catch(() => []);
   if (popular.length === 0) return null;
   return (
-    <Section title="Popular right now — full songs">
-      <HomeClient tracks={popular} />
+    <Section title="Popular right now" href="/search">
+      <TrackShelf tracks={popular} emptyText="No popular tracks right now." />
+    </Section>
+  );
+}
+
+async function TrendingSection() {
+  const trending = await getTrending(24).catch(() => []);
+  return (
+    <Section title="Trending now" href="/search">
+      <TrackShelf tracks={trending} emptyText="Could not load trending right now." />
     </Section>
   );
 }
@@ -86,33 +118,66 @@ async function PlaylistsSection() {
   );
 }
 
-export default async function Home() {
+function PodcastsEmpty() {
+  return (
+    <div className="mb-8 flex flex-col items-center gap-3 rounded-lg bg-[#181818] px-6 py-12 text-center">
+      <span className="grid h-16 w-16 place-items-center rounded-full bg-white/10">
+        <MicVocal size={28} className="text-zinc-300" />
+      </span>
+      <h2 className="text-xl font-bold text-white">No podcasts here yet</h2>
+      <p className="max-w-md text-sm text-zinc-400">
+        Our open catalogs (Audius + YouTube music search) don&apos;t carry podcasts,
+        so there&apos;s nothing to show under this filter. The music shelves are one click away.
+      </p>
+      <Link href="/" className="rounded-full bg-white px-6 py-2 text-sm font-bold text-black hover:scale-105">
+        Back to music
+      </Link>
+    </div>
+  );
+}
+
+export default async function Home(props: PageProps<"/">) {
+  const sp = await props.searchParams;
+  const raw = typeof sp?.filter === "string" ? sp.filter : "all";
+  const filter: Filter = raw === "music" || raw === "podcasts" ? raw : "all";
   const genres = [...GENRES];
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-extrabold text-white sm:text-3xl">Good evening — what will you play?</h1>
+      <Pills active={filter} />
 
-      <Section title="Browse every genre">
-        <GenreGrid genres={genres} />
-      </Section>
-
-      <Suspense fallback={<TrendingSkeleton />}>
-        <PopularSection />
+      <Suspense fallback={<QuickSkeleton />}>
+        <QuickSection />
       </Suspense>
 
-      <Suspense fallback={<TrendingSkeleton />}>
-        <TrendingSection />
-      </Suspense>
+      {filter === "podcasts" ? (
+        <PodcastsEmpty />
+      ) : (
+        <>
+          <Suspense fallback={<TrendingSkeleton />}>
+            <PopularSection />
+          </Suspense>
 
-      <Suspense fallback={<PlaylistsSkeleton />}>
-        <PlaylistsSection />
-      </Suspense>
+          <Suspense fallback={<TrendingSkeleton />}>
+            <TrendingSection />
+          </Suspense>
+
+          {filter === "all" && (
+            <>
+              <Suspense fallback={<PlaylistsSkeleton />}>
+                <PlaylistsSection />
+              </Suspense>
+
+              <Section title="Browse every genre">
+                <GenreGrid genres={genres} />
+              </Section>
+            </>
+          )}
+        </>
+      )}
 
       <p className="pb-6 text-xs text-zinc-500">
-        Musify plays the open Audius catalog (thousands of independent singers, artists and bands across {genres.length}+ genres)
-        plus full-length popular songs via the official YouTube player. Search anything — indie tracks stream as audio,
-        mainstream hits play through YouTube.
+        Musify plays the open Audius catalog plus full-length popular songs via the official YouTube player.
       </p>
     </div>
   );

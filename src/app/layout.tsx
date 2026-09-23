@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Sidebar } from "@/components/Sidebar";
 import { TopBar } from "@/components/TopBar";
 import { PlayerBar } from "@/components/Player";
+import { NowPlayingPanel } from "@/components/NowPlayingPanel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +39,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex h-full flex-col bg-black text-white">
         <Providers>
           <div className="flex min-h-0 flex-1">
-            <Sidebar />
+            <Suspense fallback={<div className="hidden w-[320px] shrink-0 p-2 md:block"><div className="h-full rounded-lg bg-[#121212]" /></div>}>
+              <Sidebar />
+            </Suspense>
             <div className="flex min-h-0 min-w-0 flex-1 flex-col p-2 sm:p-3 sm:pl-0">
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg bg-[#0a0a0a]">
                 <TopBar />
@@ -46,6 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 </main>
               </div>
             </div>
+            <NowPlayingPanel />
           </div>
           <PlayerBar />
         </Providers>

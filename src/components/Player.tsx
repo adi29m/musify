@@ -6,7 +6,7 @@ import { useLiked } from "@/context/LikedContext";
 import { formatTime, type UiTrack } from "@/lib/audius";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
-  Volume2, VolumeX, Heart,
+  Volume2, VolumeX, Heart, PanelRight,
 } from "lucide-react";
 import { memo } from "react";
 
@@ -154,6 +154,14 @@ export function PlayerBar() {
         </div>
 
         <div className="hidden w-1/3 items-center justify-end gap-2 sm:flex">
+          <button
+            onClick={() => p.setNpOpen(!p.npOpen)}
+            className={`hidden xl:block ${p.npOpen ? "text-green-500" : "text-zinc-400 hover:text-white"}`}
+            aria-label="Now playing view"
+            title="Now playing view"
+          >
+            <PanelRight size={18} />
+          </button>
           <button onClick={p.toggleMute} className="text-zinc-400 hover:text-white" aria-label="Mute">
             {p.muted || p.volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>

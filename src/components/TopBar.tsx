@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, Search, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, User, Home } from "lucide-react";
 import { useState } from "react";
 import { useMe } from "@/hooks/useMe";
 import { usePlayer } from "@/context/PlayerContext";
@@ -44,6 +44,10 @@ export function TopBar() {
           <ChevronRight size={20} />
         </button>
       </div>
+
+      <Link href="/" aria-label="Home" className={`hidden shrink-0 place-items-center rounded-full p-3 transition sm:grid ${pathname === "/" ? "bg-white/10 text-white" : "bg-white/5 text-zinc-300 hover:text-white"}`}>
+        <Home size={20} />
+      </Link>
 
       {(pathname?.startsWith("/search") || pathname === "/") && (
         <form
