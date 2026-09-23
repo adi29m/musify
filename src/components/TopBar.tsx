@@ -34,6 +34,7 @@ export function TopBar() {
   );
 
   return (
+    <>
     <header className="sticky top-0 z-20 flex items-center gap-2 bg-[#0a0a0a]/80 px-3 py-3 backdrop-blur sm:gap-3 sm:px-4">
       <div className="hidden gap-2 sm:flex">
         <button onClick={() => router.back()} className="rounded-full bg-black/60 p-2 text-zinc-300 hover:text-white" aria-label="Back">
@@ -96,13 +97,16 @@ export function TopBar() {
           </div>
         )}
       </div>
-
-      {/* mobile nav — sits just above the player bar when playing */}
+    </header>
+      {/* mobile nav — MUST live outside the header: backdrop-blur creates a
+          containing block that traps `fixed` children (they'd stick to the
+          header and overlap the search bar). As a sibling it anchors to the
+          viewport. Sits just above the player bar when playing. */}
       <nav className={`fixed left-1/2 z-20 flex -translate-x-1/2 gap-1 rounded-full bg-[#1a1a1a]/95 p-1 shadow-xl transition-all md:hidden ${current ? "bottom-24" : "bottom-4"}`}>
         {tab("/", "Home", pathname === "/")}
         {tab("/search", "Search", pathname?.startsWith("/search") ?? false)}
         {tab("/library", "Library", pathname?.startsWith("/library") ?? false)}
       </nav>
-    </header>
+    </>
   );
 }
