@@ -26,9 +26,13 @@ export const TrackRow = memo(function TrackRow({ track, queue, index }: { track:
       <div className="min-w-0">
         <p className={`truncate text-sm font-medium ${active ? "text-green-400" : "text-white"}`}>{track.title}</p>
         <p className="truncate text-xs text-zinc-400">
-          <Link href={`/artist/${track.artistId}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
-            {track.artist}
-          </Link>
+          {track.artistId ? (
+            <Link href={`/artist/${track.artistId}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
+              {track.artist}
+            </Link>
+          ) : (
+            <span>{track.artist}</span>
+          )}
           {" • "}{track.genre}
           {track.youtubeId ? (
             <span className="ml-1 rounded bg-red-600 px-1 py-px text-[10px] font-bold text-white">YouTube</span>
@@ -108,9 +112,13 @@ export function PlayerBar() {
             <Link href={`/track/${current.id}`} className="block truncate text-sm font-medium text-white hover:underline">
               {current.title}
             </Link>
-            <Link href={`/artist/${current.artistId}`} className="block truncate text-xs text-zinc-400 hover:underline">
-              {current.artist}
-            </Link>
+            {current.artistId ? (
+              <Link href={`/artist/${current.artistId}`} className="block truncate text-xs text-zinc-400 hover:underline">
+                {current.artist}
+              </Link>
+            ) : (
+              <span className="block truncate text-xs text-zinc-400">{current.artist}</span>
+            )}
           </div>
           <span className="hidden sm:block"><LikeButton track={current} small /></span>
         </div>
