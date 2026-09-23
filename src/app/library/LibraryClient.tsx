@@ -122,8 +122,8 @@ export function LibraryClient() {
                 <p className="truncate text-sm text-white">{t.title}</p>
                 <p className="truncate text-xs text-zinc-500">{t.artist}</p>
               </div>
-              <button onClick={() => playTracks(dt, i)} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black">Play</button>
-              <button onClick={() => removeTrack(detail.id, t.id)} className="p-1 text-zinc-500 hover:text-red-400" aria-label="Remove">
+              <button onClick={() => playTracks(dt, i)} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black shrink-0">Play</button>
+              <button onClick={() => removeTrack(detail.id, t.id)} className="shrink-0 p-1 text-zinc-500 hover:text-red-400" aria-label="Remove">
                 <Trash2 size={16} />
               </button>
             </div>
@@ -159,8 +159,8 @@ export function LibraryClient() {
                   <p className="truncate text-sm text-white">{l.title}</p>
                   <p className="truncate text-xs text-zinc-500">{l.artist}</p>
                 </div>
-                <button onClick={() => playTracks(likeTracks, i)} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black">Play</button>
-                <button onClick={() => unlike(l.trackId)} className="p-1 text-zinc-500 hover:text-red-400" aria-label="Unlike">
+                <button onClick={() => playTracks(likeTracks, i)} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black shrink-0">Play</button>
+                <button onClick={() => unlike(l.trackId)} className="shrink-0 p-1 text-zinc-500 hover:text-red-400" aria-label="Unlike">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -182,7 +182,7 @@ export function LibraryClient() {
                   <p className="text-sm text-zinc-500">{p.tracks.length} songs</p>
                 </Link>
                 <div className="mt-3 flex gap-2">
-                  <Link href={`/library?playlist=${p.id}`} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black">Open</Link>
+                  <Link href={`/library?playlist=${p.id}`} className="rounded-full bg-white px-3 py-1 text-xs font-bold text-black shrink-0">Open</Link>
                   <button onClick={() => removePlaylist(p.id)} className="rounded-full bg-zinc-800 px-3 py-1 text-xs font-bold text-white hover:bg-red-900">Delete</button>
                 </div>
               </div>

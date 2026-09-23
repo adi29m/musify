@@ -21,7 +21,9 @@ export function TrackClient({ track }: { track: UiTrack }) {
       </button>
       <LikeButton track={track} />
       <AddToPlaylist track={track} />
-      <audio controls src={track.streamUrl} className="mt-2 w-full max-w-xl" preload="none" />
+      {!track.youtubeId && (
+        <audio controls src={track.streamUrl} className="mt-2 hidden w-full max-w-xl sm:block" preload="none" />
+      )}
     </div>
   );
 }

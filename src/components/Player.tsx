@@ -16,7 +16,7 @@ export const TrackRow = memo(function TrackRow({ track, queue, index }: { track:
   return (
     <div
       onClick={() => playTracks(queue, index)}
-      className={`group grid cursor-pointer grid-cols-[3rem_1fr_auto] items-center gap-3 rounded-md px-3 py-2 hover:bg-white/10 sm:grid-cols-[2rem_3rem_1fr_auto] ${active ? "bg-white/10" : ""}`}
+      className={`group grid cursor-pointer grid-cols-[3rem_1fr_auto] items-center gap-2 rounded-md px-2 py-2 hover:bg-white/10 sm:grid-cols-[2rem_3rem_1fr_auto] sm:gap-3 sm:px-3 ${active ? "bg-white/10" : ""}`}
     >
       <span className="hidden text-sm text-zinc-500 sm:block">{active && isPlaying ? "▶" : index + 1}</span>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -39,9 +39,9 @@ export const TrackRow = memo(function TrackRow({ track, queue, index }: { track:
           ) : null}
         </p>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <LikeButton track={track} small />
-        <span className="text-xs text-zinc-500">{formatTime(track.duration)}</span>
+        <span className="hidden text-xs text-zinc-500 min-[380px]:block">{formatTime(track.duration)}</span>
       </div>
     </div>
   );
@@ -57,7 +57,7 @@ export const TrackCard = memo(function TrackCard({ track, queue }: { track: UiTr
         <img src={track.artwork} alt={track.title} className="aspect-square w-full rounded-md object-cover shadow-lg" loading="lazy" />
         <button
           onClick={() => (active ? toggle() : playTrack(track, queue))}
-          className="absolute bottom-2 right-2 grid h-12 w-12 translate-y-2 place-items-center rounded-full bg-green-500 text-black opacity-0 shadow-xl transition group-hover:translate-y-0 group-hover:opacity-100"
+          className="absolute bottom-2 right-2 grid h-12 w-12 translate-y-0 place-items-center rounded-full bg-green-500 text-black opacity-100 shadow-xl transition md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
           aria-label={active && isPlaying ? "Pause" : "Play"}
         >
           {active && isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
@@ -103,11 +103,11 @@ export function PlayerBar() {
   const max = Math.max(duration, current?.duration || 0, 1);
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800 bg-black px-3 py-2">
-      <div className="mx-auto flex max-w-screen-2xl items-center gap-3">
-        <div className="flex w-1/3 min-w-0 items-center gap-3">
+    <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800 bg-black px-2 py-2 sm:px-3">
+      <div className="mx-auto flex max-w-screen-2xl items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:w-1/3 sm:gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={current.artwork} alt="" className="h-14 w-14 rounded object-cover" />
+          <img src={current.artwork} alt="" className="h-12 w-12 shrink-0 rounded object-cover sm:h-14 sm:w-14" />
           <div className="min-w-0">
             <Link href={`/track/${current.id}`} className="block truncate text-sm font-medium text-white hover:underline">
               {current.title}
@@ -123,25 +123,25 @@ export function PlayerBar() {
           <span className="hidden sm:block"><LikeButton track={current} small /></span>
         </div>
 
-        <div className="flex flex-1 flex-col items-center gap-1">
-          <div className="flex items-center gap-4">
-            <button onClick={p.toggleShuffle} className={p.shuffle ? "text-green-500" : "text-zinc-400 hover:text-white"} aria-label="Shuffle">
+        <div className="flex shrink-0 flex-col items-center gap-1 sm:flex-1">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button onClick={p.toggleShuffle} className={`hidden min-[430px]:block ${p.shuffle ? "text-green-500" : "text-zinc-400 hover:text-white"}`} aria-label="Shuffle">
               <Shuffle size={18} />
             </button>
             <button onClick={p.prev} className="text-zinc-300 hover:text-white" aria-label="Previous">
               <SkipBack size={20} fill="currentColor" />
             </button>
-            <button onClick={p.toggle} className="grid h-10 w-10 place-items-center rounded-full bg-white text-black hover:scale-105" aria-label="Play/Pause">
+            <button onClick={p.toggle} className="grid h-11 w-11 place-items-center rounded-full bg-white text-black hover:scale-105 sm:h-10 sm:w-10" aria-label="Play/Pause">
               {p.isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
             </button>
             <button onClick={p.next} className="text-zinc-300 hover:text-white" aria-label="Next">
               <SkipForward size={20} fill="currentColor" />
             </button>
-            <button onClick={p.cycleRepeat} className={p.repeat !== "off" ? "text-green-500" : "text-zinc-400 hover:text-white"} aria-label="Repeat">
+            <button onClick={p.cycleRepeat} className={`hidden min-[430px]:block ${p.repeat !== "off" ? "text-green-500" : "text-zinc-400 hover:text-white"}`} aria-label="Repeat">
               {p.repeat === "one" ? <Repeat1 size={18} /> : <Repeat size={18} />}
             </button>
           </div>
-          <div className="flex w-full max-w-xl items-center gap-2 text-[11px] text-zinc-400">
+          <div className="hidden w-full max-w-xl items-center gap-2 text-[11px] text-zinc-400 sm:flex">
             <span>{formatTime(progress)}</span>
             <input
               type="range" min={0} max={max} step={1}

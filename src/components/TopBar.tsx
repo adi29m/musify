@@ -5,11 +5,13 @@ import { useRouter, usePathname } from "next/navigation";
 import { ChevronLeft, ChevronRight, Search, User } from "lucide-react";
 import { useState } from "react";
 import { useMe } from "@/hooks/useMe";
+import { usePlayer } from "@/context/PlayerContext";
 
 export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { me, loading, refresh } = useMe();
+  const { current } = usePlayer();
   const [q, setQ] = useState("");
   const [menu, setMenu] = useState(false);
 
@@ -19,8 +21,20 @@ export function TopBar() {
     router.refresh();
   }
 
+  const tab = (href: string, label: string, active: boolean) => (
+    <Link
+      key={href}
+      href={href}
+      className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+        active ? "bg-white text-black" : "text-white hover:bg-white/10"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 bg-[#0a0a0a]/80 px-4 py-3 backdrop-blur">
+    <header className="sticky top-0 z-20 flex items-center gap-2 bg-[#0a0a0a]/80 px-3 py-3 backdrop-blur sm:gap-3 sm:px-4">
       <div className="hidden gap-2 sm:flex">
         <button onClick={() => router.back()} className="rounded-full bg-black/60 p-2 text-zinc-300 hover:text-white" aria-label="Back">
           <ChevronLeft size={20} />
@@ -32,7 +46,7 @@ export function TopBar() {
 
       {(pathname?.startsWith("/search") || pathname === "/") && (
         <form
-          className="flex max-w-md flex-1 items-center gap-2 rounded-full border border-transparent bg-[#242424] px-4 py-2 focus-within:border-white"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-transparent bg-[#242424] px-3 py-2 focus-within:border-white sm:max-w-md sm:px-4"
           onSubmit={(e) => {
             e.preventDefault();
             router.push(`/search?q=${encodeURIComponent(q)}`);
@@ -42,21 +56,21 @@ export function TopBar() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="What do you want to play? Search songs, artists, bands…"
+            placeholder="Search songs, artists…"
             data-gramm="false"
             data-gramm_editor="false"
-            className="w-full bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+            className="w-full min-w-0 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
           />
         </form>
       )}
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
         {!loading && !me && (
           <>
-            <Link href="/signup" className="rounded-full px-4 py-2 text-sm font-bold text-zinc-300 hover:text-white">
+            <Link href="/signup" className="hidden rounded-full px-3 py-2 text-sm font-bold text-zinc-300 hover:text-white min-[400px]:block sm:px-4">
               Sign up
             </Link>
-            <Link href="/login" className="rounded-full bg-white px-5 py-2 text-sm font-bold text-black hover:scale-105">
+            <Link href="/login" className="rounded-full bg-white px-4 py-1.5 text-sm font-bold text-black hover:scale-105 sm:px-5 sm:py-2">
               Log in
             </Link>
           </>
@@ -83,11 +97,11 @@ export function TopBar() {
         )}
       </div>
 
-      {/* mobile nav */}
-      <nav className="fixed bottom-24 left-1/2 z-20 flex -translate-x-1/2 gap-1 rounded-full bg-[#1a1a1a]/95 p-1 shadow-xl md:hidden">
-        <Link href="/" className="rounded-full px-4 py-2 text-sm font-bold text-white">Home</Link>
-        <Link href="/search" className="rounded-full px-4 py-2 text-sm font-bold text-white">Search</Link>
-        <Link href="/library" className="rounded-full px-4 py-2 text-sm font-bold text-white">Library</Link>
+      {/* mobile nav — sits just above the player bar when playing */}
+      <nav className={`fixed left-1/2 z-20 flex -translate-x-1/2 gap-1 rounded-full bg-[#1a1a1a]/95 p-1 shadow-xl transition-all md:hidden ${current ? "bottom-24" : "bottom-4"}`}>
+        {tab("/", "Home", pathname === "/")}
+        {tab("/search", "Search", pathname?.startsWith("/search") ?? false)}
+        {tab("/library", "Library", pathname?.startsWith("/library") ?? false)}
       </nav>
     </header>
   );
