@@ -30,6 +30,9 @@ export const TrackRow = memo(function TrackRow({ track, queue, index }: { track:
             {track.artist}
           </Link>
           {" • "}{track.genre}
+          {track.youtubeId ? (
+            <span className="ml-1 rounded bg-red-600 px-1 py-px text-[10px] font-bold text-white">YouTube</span>
+          ) : null}
         </p>
       </div>
       <div className="flex items-center gap-3">
@@ -62,6 +65,9 @@ export const TrackCard = memo(function TrackCard({ track, queue }: { track: UiTr
       <Link href={track.artistId ? `/artist/${track.artistId}` : "#"} className="block truncate text-xs text-zinc-400 hover:underline">
         {track.artist}
       </Link>
+      {track.youtubeId ? (
+        <span className="mt-1 inline-block rounded bg-red-600 px-1 py-px text-[10px] font-bold text-white">YouTube • full song</span>
+      ) : null}
     </div>
   );
 });

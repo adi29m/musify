@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { UiTrack } from "@/lib/audius";
+import { isYouTube, type UiTrack } from "@/lib/audius";
 
 type RepeatMode = "off" | "all" | "one";
 
@@ -36,8 +36,20 @@ type ProgressCtx = {
 const Ctx = createContext<PlayerCtx | null>(null);
 const ProgressCx = createContext<ProgressCtx | null>(null);
 
+declare global {
+  interface Window {
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ytHostRef = useRef<HTMLDivElement | null>(null);
+  const ytPlayerRef = useRef<any>(null);
+  const [ytReady, setYtReady] = useState(false);
+  const pendingYtRef = useRef<string | null>(null);
+  const engineRef = useRef<"audio" | "youtube" | null>(null);
   const [queue, setQueue] = useState<UiTrack[]>([]);
   const [index, setIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -52,6 +64,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   repeatRef.current = repeat;
   const shuffleRef = useRef(shuffle);
   shuffleRef.current = shuffle;
+  const volumeRef = useRef(volume);
+  volumeRef.current = volume;
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
 
   const current = index >= 0 && index < queue.length ? queue[index] : null;
   const currentIdRef = useRef<string | null>(null);
@@ -61,7 +77,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const s = shuffleRef.current;
     if (r === "one" && auto) {
       const a = audioRef.current;
-      if (a) {
+      if (engineRef.current === "youtube") {
+        try {
+          ytPlayerRef.current?.seekTo(0, true);
+          ytPlayerRef.current?.playVideo();
+        } catch { /* noop */ }
+      } else if (a) {
         a.currentTime = 0;
         a.play().catch(() => {});
       }
@@ -83,23 +104,86 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const advanceRef = useRef(advance);
+  advanceRef.current = advance;
+
+  // --- engines -----------------------------------------------------------
   useEffect(() => {
     const a = new Audio();
     a.preload = "metadata";
     a.volume = 0.8;
     audioRef.current = a;
 
-    const onTime = () => setProgress(a.currentTime);
-    const onMeta = () => setDuration(a.duration || 0);
-    const onEnd = () => advance(true);
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
+    const onTime = () => {
+      if (engineRef.current !== "youtube") setProgress(a.currentTime);
+    };
+    const onMeta = () => {
+      if (engineRef.current !== "youtube") setDuration(a.duration || 0);
+    };
+    const onEnd = () => {
+      if (engineRef.current !== "youtube") advanceRef.current(true);
+    };
+    const onPlay = () => {
+      if (engineRef.current !== "youtube") setIsPlaying(true);
+    };
+    const onPause = () => {
+      if (engineRef.current !== "youtube") setIsPlaying(false);
+    };
 
     a.addEventListener("timeupdate", onTime);
     a.addEventListener("loadedmetadata", onMeta);
     a.addEventListener("ended", onEnd);
     a.addEventListener("play", onPlay);
     a.addEventListener("pause", onPause);
+
+    // YouTube IFrame engine (hidden official player for full popular songs)
+    const createYt = () => {
+      if (ytPlayerRef.current || !ytHostRef.current || !window.YT?.Player) return;
+      try {
+        ytPlayerRef.current = new window.YT.Player(ytHostRef.current, {
+          height: "2",
+          width: "2",
+          playerVars: { rel: 0, disablekb: 1 },
+          events: {
+            onReady: () => {
+              setYtReady(true);
+              try {
+                ytPlayerRef.current?.setVolume(Math.round(volumeRef.current * 100));
+                if (mutedRef.current) ytPlayerRef.current?.mute();
+              } catch { /* noop */ }
+              const pending = pendingYtRef.current;
+              pendingYtRef.current = null;
+              if (pending && engineRef.current === "youtube") {
+                try {
+                  ytPlayerRef.current?.loadVideoById(pending);
+                } catch { /* noop */ }
+              }
+            },
+            onStateChange: (e: { data: number }) => {
+              if (engineRef.current !== "youtube") return;
+              if (e.data === 1) setIsPlaying(true); // PLAYING
+              else if (e.data === 2) setIsPlaying(false); // PAUSED
+              else if (e.data === 0) advanceRef.current(true); // ENDED
+            },
+          },
+        });
+      } catch { /* noop */ }
+    };
+
+    if (window.YT?.Player) {
+      createYt();
+    } else {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        prev?.();
+        createYt();
+      };
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      s.async = true;
+      document.head.appendChild(s);
+    }
+
     return () => {
       a.pause();
       a.removeEventListener("timeupdate", onTime);
@@ -108,18 +192,61 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
     };
-  }, [advance]);
+  }, []);
+
+  const playYoutubeId = useCallback((videoId: string) => {
+    engineRef.current = "youtube";
+    audioRef.current?.pause();
+    setProgress(0);
+    try {
+      if (ytPlayerRef.current?.loadVideoById) {
+        ytPlayerRef.current.loadVideoById(videoId);
+      } else {
+        pendingYtRef.current = videoId;
+      }
+    } catch {
+      pendingYtRef.current = videoId;
+    }
+    // YT events drive isPlaying; assume playing for instant UI feedback.
+    setIsPlaying(true);
+  }, []);
 
   useEffect(() => {
     const a = audioRef.current;
     if (!a || !current) return;
-    if (currentIdRef.current !== current.id) {
-      currentIdRef.current = current.id;
+    if (currentIdRef.current === current.id) return;
+    currentIdRef.current = current.id;
+    if (isYouTube(current) && current.youtubeId) {
+      setDuration(current.duration || 0);
+      playYoutubeId(current.youtubeId);
+      return;
+    }
+    engineRef.current = "audio";
+    try {
+      ytPlayerRef.current?.pauseVideo();
+    } catch { /* noop */ }
+    if (a.src !== current.streamUrl) {
       a.src = current.streamUrl;
       setProgress(0);
       setDuration(current.duration || 0);
     }
     a.play().catch(() => setIsPlaying(false));
+  }, [current, playYoutubeId]);
+
+  // YouTube progress polling (audio engine uses timeupdate events instead)
+  useEffect(() => {
+    if (!current || !isYouTube(current)) return;
+    const t = setInterval(() => {
+      try {
+        const yt = ytPlayerRef.current;
+        if (!yt?.getCurrentTime || engineRef.current !== "youtube") return;
+        const pos = yt.getCurrentTime();
+        const dur = yt.getDuration?.() || 0;
+        if (typeof pos === "number" && !isNaN(pos)) setProgress(pos);
+        if (typeof dur === "number" && dur > 0) setDuration(dur);
+      } catch { /* noop */ }
+    }, 500);
+    return () => clearInterval(t);
   }, [current]);
 
   useEffect(() => {
@@ -163,6 +290,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   );
 
   const toggle = useCallback(() => {
+    if (engineRef.current === "youtube") {
+      try {
+        const yt = ytPlayerRef.current;
+        const state = yt?.getPlayerState?.();
+        if (state === 1) yt.pauseVideo();
+        else yt?.playVideo();
+      } catch { /* noop */ }
+      return;
+    }
     const a = audioRef.current;
     if (!a || !current) return;
     if (a.paused) a.play().catch(() => {});
@@ -172,15 +308,32 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const next = useCallback(() => advance(false), [advance]);
 
   const prev = useCallback(() => {
-    const a = audioRef.current;
-    if (a && a.currentTime > 3) {
-      a.currentTime = 0;
-      return;
+    if (engineRef.current === "youtube") {
+      try {
+        const pos = ytPlayerRef.current?.getCurrentTime?.() || 0;
+        if (pos > 3) {
+          ytPlayerRef.current?.seekTo(0, true);
+          return;
+        }
+      } catch { /* noop */ }
+    } else {
+      const a = audioRef.current;
+      if (a && a.currentTime > 3) {
+        a.currentTime = 0;
+        return;
+      }
     }
     setIndex((i) => (i > 0 ? i - 1 : i));
   }, []);
 
   const seek = useCallback((sec: number) => {
+    if (engineRef.current === "youtube") {
+      try {
+        ytPlayerRef.current?.seekTo(sec, true);
+      } catch { /* noop */ }
+      setProgress(sec);
+      return;
+    }
     const a = audioRef.current;
     if (!a) return;
     a.currentTime = sec;
@@ -195,15 +348,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       a.volume = nv;
       a.muted = false;
     }
+    try {
+      ytPlayerRef.current?.setVolume(Math.round(nv * 100));
+      ytPlayerRef.current?.unMute();
+    } catch { /* noop */ }
     setMuted(false);
   }, []);
 
   const toggleMute = useCallback(() => {
-    const a = audioRef.current;
-    if (!a) return;
     setMuted((m) => {
-      a.muted = !m;
-      return !m;
+      const nm = !m;
+      const a = audioRef.current;
+      if (a) a.muted = nm;
+      try {
+        if (nm) ytPlayerRef.current?.mute();
+        else ytPlayerRef.current?.unMute();
+      } catch { /* noop */ }
+      return nm;
     });
   }, []);
 
@@ -227,9 +388,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     [progress, duration, seek]
   );
 
+  void ytReady;
+
   return (
     <Ctx.Provider value={value}>
-      <ProgressCx.Provider value={progressValue}>{children}</ProgressCx.Provider>
+      <ProgressCx.Provider value={progressValue}>
+        {/* Hidden official YouTube player for full-length popular songs */}
+        <div ref={ytHostRef} aria-hidden style={{ position: "fixed", left: -9999, top: 0, width: 2, height: 2 }} />
+        {children}
+      </ProgressCx.Provider>
     </Ctx.Provider>
   );
 }

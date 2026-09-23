@@ -24,6 +24,8 @@ export function AddToPlaylist({ track }: { track: UiTrack }) {
       body: JSON.stringify({
         trackId: track.id, title: track.title, artist: track.artist,
         artwork: track.artwork, genre: track.genre, duration: track.duration,
+        source: track.source === "youtube" ? "youtube" : "audius",
+        youtubeId: track.youtubeId ?? null,
       }),
     });
     if (r.ok) {

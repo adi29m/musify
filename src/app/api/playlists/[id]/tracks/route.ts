@@ -17,6 +17,8 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/playlists/[
     data: {
       playlistId: id, trackId: String(b.trackId), title: String(b.title), artist: String(b.artist),
       artwork: b.artwork ?? null, genre: b.genre ?? null, duration: b.duration ?? null, position: count,
+      source: b.source === "youtube" ? "youtube" : "audius",
+      youtubeId: b.youtubeId ? String(b.youtubeId) : null,
     },
   });
   await prisma.playlist.update({ where: { id }, data: { updatedAt: new Date() } });

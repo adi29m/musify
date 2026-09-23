@@ -28,6 +28,8 @@ model Like {
   artwork    String?
   genre      String?
   duration   Int?
+  source     String   @default("audius")
+  youtubeId  String?
   createdAt  DateTime @default(now())
 
   @@unique([userId, trackId])
@@ -54,6 +56,8 @@ model PlaylistTrack {
   artwork    String?
   genre      String?
   duration   Int?
+  source     String   @default("audius")
+  youtubeId  String?
   position   Int      @default(0)
   createdAt  DateTime @default(now())
 }

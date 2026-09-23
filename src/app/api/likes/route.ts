@@ -35,10 +35,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "trackId, title, artist required" }, { status: 400 });
   const like = await prisma.like.upsert({
     where: { userId_trackId: { userId: user.id, trackId: String(b.trackId) } },
-    update: { title: String(b.title), artist: String(b.artist), artwork: b.artwork ?? null, genre: b.genre ?? null, duration: b.duration ?? null },
+    update: { title: String(b.title), artist: String(b.artist), artwork: b.artwork ?? null, genre: b.genre ?? null, duration: b.duration ?? null, source: b.source === "youtube" ? "youtube" : "audius", youtubeId: b.youtubeId ? String(b.youtubeId) : null },
     create: {
       userId: user.id, trackId: String(b.trackId), title: String(b.title), artist: String(b.artist),
       artwork: b.artwork ?? null, genre: b.genre ?? null, duration: b.duration ?? null,
+      source: b.source === "youtube" ? "youtube" : "audius",
+      youtubeId: b.youtubeId ? String(b.youtubeId) : null,
     },
   });
   return NextResponse.json({ like });

@@ -1,5 +1,7 @@
 import { searchTracks, searchArtists, searchPlaylists, artistArt, playlistArt } from "@/lib/audius";
+import { searchYouTube, isYouTubeConfigured } from "@/lib/youtube";
 import { SearchClient } from "./SearchClient";
+import { YouTubeSection } from "./YouTubeSection";
 import Link from "next/link";
 
 export default async function SearchPage(props: PageProps<"/search">) {
@@ -16,15 +18,19 @@ export default async function SearchPage(props: PageProps<"/search">) {
     );
   }
 
-  const [tracks, artists, playlists] = await Promise.all([
+  const [tracks, artists, playlists, ytTracks] = await Promise.all([
     searchTracks(q).catch(() => []),
     searchArtists(q).catch(() => []),
     searchPlaylists(q).catch(() => []),
+    searchYouTube(q, 12).catch(() => []),
   ]);
+  const ytConfigured = isYouTubeConfigured();
 
   return (
     <div>
       <h1 className="mb-4 text-2xl font-extrabold">Results for “{q}”</h1>
+
+      <YouTubeSection tracks={ytTracks} query={q} configured={ytConfigured} />
 
       {artists.length > 0 && (
         <section className="mb-8">

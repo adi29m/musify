@@ -71,7 +71,15 @@ export type UiTrack = {
   genre: string;
   plays: number;
   streamUrl: string;
+  // Optional second source. Absent/"audius" = raw MP3 via <audio>.
+  // "youtube" = full popular song played through the YouTube IFrame player.
+  source?: "audius" | "youtube";
+  youtubeId?: string;
 };
+
+export function isYouTube(t: UiTrack): boolean {
+  return t.source === "youtube" || !!t.youtubeId;
+}
 
 function art(
   a?: { "150x150"?: string; "480x480"?: string; "1000x1000"?: string },
@@ -95,6 +103,7 @@ export function toUiTrack(t: AudiusTrack): UiTrack {
     genre: t.genre || "Unknown",
     plays: t.play_count || 0,
     streamUrl: streamUrl(t.id),
+    source: "audius",
   };
 }
 

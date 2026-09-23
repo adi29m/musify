@@ -59,6 +59,8 @@ export function LikedProvider({ children }: { children: React.ReactNode }) {
             body: JSON.stringify({
               trackId: track.id, title: track.title, artist: track.artist,
               artwork: track.artwork, genre: track.genre, duration: track.duration,
+              source: track.source === "youtube" ? "youtube" : "audius",
+              youtubeId: track.youtubeId ?? null,
             }),
           });
           if (r.status === 401) {

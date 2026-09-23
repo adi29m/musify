@@ -7,15 +7,22 @@ import { usePlayer } from "@/context/PlayerContext";
 import { Play, Trash2 } from "lucide-react";
 import type { UiTrack } from "@/lib/audius";
 
-type Like = { trackId: string; title: string; artist: string; artwork: string | null; genre: string | null; duration: number | null };
-type Pl = { id: string; name: string; description: string | null; tracks: { id: string; trackId: string; title: string; artist: string; artwork: string | null; duration: number | null; genre: string | null }[] };
+type Like = { trackId: string; title: string; artist: string; artwork: string | null; genre: string | null; duration: number | null; source?: string | null; youtubeId?: string | null };
+type PlTrack = { id: string; trackId: string; title: string; artist: string; artwork: string | null; duration: number | null; genre: string | null; source?: string | null; youtubeId?: string | null };
+type Pl = { id: string; name: string; description: string | null; tracks: PlTrack[] };
 
-function toUi(l: { trackId: string; title: string; artist: string; artwork?: string | null; duration?: number | null; genre?: string | null }): UiTrack {
+function toUi(l: { trackId: string; title: string; artist: string; artwork?: string | null; duration?: number | null; genre?: string | null; source?: string | null; youtubeId?: string | null }): UiTrack {
+  const yt = l.source === "youtube" || !!l.youtubeId;
+  const youtubeId = l.youtubeId || (yt ? l.trackId.replace(/^yt_/, "") : undefined);
   return {
     id: l.trackId, title: l.title, artist: l.artist, artistId: "",
     artwork: l.artwork || "/placeholder-album.svg",
     duration: l.duration || 0, genre: l.genre || "Unknown", plays: 0,
-    streamUrl: `https://discoveryprovider.audius.co/v1/tracks/${l.trackId}/stream?app_name=MusicAppClone`,
+    streamUrl: yt && youtubeId
+      ? `https://www.youtube.com/watch?v=${youtubeId}`
+      : `https://discoveryprovider.audius.co/v1/tracks/${l.trackId}/stream?app_name=MusicAppClone`,
+    source: yt ? "youtube" : "audius",
+    youtubeId,
   };
 }
 
@@ -94,7 +101,7 @@ export function LibraryClient() {
   const likeTracks = likes.map(toUi);
 
   if (detail) {
-    const dt = detail.tracks.map((t) => toUi({ trackId: t.trackId, title: t.title, artist: t.artist, artwork: t.artwork, duration: t.duration, genre: t.genre }));
+    const dt = detail.tracks.map((t) => toUi({ trackId: t.trackId, title: t.title, artist: t.artist, artwork: t.artwork, duration: t.duration, genre: t.genre, source: t.source, youtubeId: t.youtubeId }));
     return (
       <div>
         <button onClick={() => router.push("/library")} className="mb-4 text-sm text-zinc-400 hover:text-white">← All playlists</button>

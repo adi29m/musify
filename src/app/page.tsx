@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getTrending, getTrendingPlaylists, GENRES, playlistArt } from "@/lib/audius";
+import { getPopularMusic } from "@/lib/youtube";
 import { Section, GenreGrid } from "@/components/Section";
 import { HomeClient } from "./HomeClient";
 import Link from "next/link";
@@ -56,6 +57,16 @@ async function TrendingSection() {
   );
 }
 
+async function PopularSection() {
+  const popular = await getPopularMusic(12).catch(() => []);
+  if (popular.length === 0) return null;
+  return (
+    <Section title="Popular right now — full songs">
+      <HomeClient tracks={popular} />
+    </Section>
+  );
+}
+
 async function PlaylistsSection() {
   const playlists = await getTrendingPlaylists(8).catch(() => []);
   if (playlists.length === 0) return null;
@@ -87,6 +98,10 @@ export default async function Home() {
       </Section>
 
       <Suspense fallback={<TrendingSkeleton />}>
+        <PopularSection />
+      </Suspense>
+
+      <Suspense fallback={<TrendingSkeleton />}>
         <TrendingSection />
       </Suspense>
 
@@ -95,9 +110,9 @@ export default async function Home() {
       </Suspense>
 
       <p className="pb-6 text-xs text-zinc-500">
-        Musify streams the open Audius catalog — thousands of independent singers, artists and bands across {genres.length}+ genres,
-        100% legal full-track playback. Mainstream major-label hits can&apos;t be bundled due to copyright; search the open catalog or
-        use Library to save likes & playlists.
+        Musify plays the open Audius catalog (thousands of independent singers, artists and bands across {genres.length}+ genres)
+        plus full-length popular songs via the official YouTube player. Search anything — indie tracks stream as audio,
+        mainstream hits play through YouTube.
       </p>
     </div>
   );
