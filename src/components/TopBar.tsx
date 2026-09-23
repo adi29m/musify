@@ -43,6 +43,8 @@ export function TopBar() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="What do you want to play? Search songs, artists, bands…"
+            data-gramm="false"
+            data-gramm_editor="false"
             className="w-full bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
           />
         </form>

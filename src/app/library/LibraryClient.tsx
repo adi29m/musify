@@ -171,7 +171,7 @@ export function LibraryClient() {
       ) : (
         <div>
           <div className="mb-6 flex max-w-md gap-2">
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New playlist name" className="w-full rounded-full bg-[#242424] px-4 py-2 text-sm outline-none" />
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="New playlist name" data-gramm="false" data-gramm_editor="false" className="w-full rounded-full bg-[#242424] px-4 py-2 text-sm outline-none" />
             <button onClick={createPlaylist} className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Create</button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

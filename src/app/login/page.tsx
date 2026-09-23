@@ -35,7 +35,7 @@ export default function LoginPage() {
       <form onSubmit={submit} className="space-y-3 rounded-lg bg-[#121212] p-6">
         {err && <p className="rounded bg-red-900/50 p-2 text-sm text-red-200">{err}</p>}
         <label className="block text-sm font-bold">Email
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className="mt-1 w-full rounded bg-[#242424] px-3 py-2 outline-none focus:ring-1 focus:ring-green-500" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required data-gramm="false" data-gramm_editor="false" className="mt-1 w-full rounded bg-[#242424] px-3 py-2 outline-none focus:ring-1 focus:ring-green-500" />
         </label>
         <label className="block text-sm font-bold">Password
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className="mt-1 w-full rounded bg-[#242424] px-3 py-2 outline-none focus:ring-1 focus:ring-green-500" />

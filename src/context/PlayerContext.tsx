@@ -45,7 +45,6 @@ declare global {
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const ytHostRef = useRef<HTMLDivElement | null>(null);
   const ytPlayerRef = useRef<any>(null);
   const [ytReady, setYtReady] = useState(false);
   const pendingYtRef = useRef<string | null>(null);
@@ -143,9 +142,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const createYt = useCallback(() => {
-    if (ytPlayerRef.current || !ytHostRef.current || !window.YT?.Player) return false;
+    if (ytPlayerRef.current || typeof document === "undefined" || !window.YT?.Player) return false;
     try {
-      ytPlayerRef.current = new window.YT.Player(ytHostRef.current, {
+      // Created imperatively on document.body — NEVER as React JSX. The YT
+      // library replaces/mutates this node, and if React owned it, the next
+      // commit would throw insertBefore/removeChild NotFoundErrors and kill
+      // the whole tree.
+      let host = document.getElementById("musify-yt-host");
+      if (!host) {
+        host = document.createElement("div");
+        host.id = "musify-yt-host";
+        host.setAttribute("aria-hidden", "true");
+        host.style.cssText = "position:fixed;left:-9999px;top:0;width:2px;height:2px;";
+        document.body.appendChild(host);
+      }
+      ytPlayerRef.current = new window.YT.Player(host, {
         height: "2",
         width: "2",
         playerVars: { rel: 0, disablekb: 1 },
@@ -435,11 +446,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider value={value}>
-      <ProgressCx.Provider value={progressValue}>
-        {/* Hidden official YouTube player for full-length popular songs */}
-        <div ref={ytHostRef} aria-hidden style={{ position: "fixed", left: -9999, top: 0, width: 2, height: 2 }} />
-        {children}
-      </ProgressCx.Provider>
+      <ProgressCx.Provider value={progressValue}>{children}</ProgressCx.Provider>
     </Ctx.Provider>
   );
 }

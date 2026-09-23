@@ -53,6 +53,8 @@ export function SearchClient({ initialQuery, initialTracks }: { initialQuery: st
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Songs, artists, bands…"
+          data-gramm="false"
+          data-gramm_editor="false"
           className="w-full rounded-full bg-[#242424] px-4 py-2 text-sm outline-none"
         />
         <button className="rounded-full bg-white px-4 py-2 text-sm font-bold text-black">Go</button>
