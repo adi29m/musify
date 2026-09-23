@@ -107,6 +107,90 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const advanceRef = useRef(advance);
   advanceRef.current = advance;
 
+  // YouTube IFrame API is lazy-loaded on the first YouTube play — never on
+  // page mount — so youtube.com is untouched unless the user plays a YT song.
+  const ytApiPromiseRef = useRef<Promise<boolean> | null>(null);
+
+  const loadYtApi = useCallback((): Promise<boolean> => {
+    if (typeof window === "undefined") return Promise.resolve(false);
+    if (window.YT?.Player) return Promise.resolve(true);
+    if (ytApiPromiseRef.current) return ytApiPromiseRef.current;
+    ytApiPromiseRef.current = new Promise((resolve) => {
+      let done = false;
+      const finish = (ok: boolean) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(ok);
+      };
+      const timer = setTimeout(() => finish(!!window.YT?.Player), 15000);
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        prev?.();
+        finish(true);
+      };
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      s.async = true;
+      s.onload = () => {
+        // API calls onYouTubeIframeAPIReady shortly after load; poll as backup.
+        setTimeout(() => finish(!!window.YT?.Player), 3000);
+      };
+      s.onerror = () => finish(false);
+      document.head.appendChild(s);
+    });
+    return ytApiPromiseRef.current;
+  }, []);
+
+  const createYt = useCallback(() => {
+    if (ytPlayerRef.current || !ytHostRef.current || !window.YT?.Player) return false;
+    try {
+      ytPlayerRef.current = new window.YT.Player(ytHostRef.current, {
+        height: "2",
+        width: "2",
+        playerVars: { rel: 0, disablekb: 1 },
+        events: {
+          onReady: () => {
+            setYtReady(true);
+            try {
+              ytPlayerRef.current?.setVolume(Math.round(volumeRef.current * 100));
+              if (mutedRef.current) ytPlayerRef.current?.mute();
+            } catch { /* noop */ }
+            const pending = pendingYtRef.current;
+            pendingYtRef.current = null;
+            if (pending && engineRef.current === "youtube") {
+              try {
+                ytPlayerRef.current?.loadVideoById(pending);
+              } catch { /* noop */ }
+            }
+          },
+          onStateChange: (e: { data: number }) => {
+            if (engineRef.current !== "youtube") return;
+            if (e.data === 1) setIsPlaying(true); // PLAYING
+            else if (e.data === 2) setIsPlaying(false); // PAUSED
+            else if (e.data === 0) advanceRef.current(true); // ENDED
+          },
+          onError: (e: { data: number }) => {
+            // Unplayable/unembeddable video (e.g. 101/150) — skip to next.
+            if (engineRef.current !== "youtube") return;
+            if ([5, 100, 101, 150].includes(e.data)) advanceRef.current(true);
+          },
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const ensureYtPlayer = useCallback(async (): Promise<boolean> => {
+    if (ytPlayerRef.current?.loadVideoById) return true;
+    const ok = await loadYtApi();
+    if (!ok) return false;
+    if (!ytPlayerRef.current) createYt();
+    return !!ytPlayerRef.current;
+  }, [loadYtApi, createYt]);
+
   // --- engines -----------------------------------------------------------
   useEffect(() => {
     const a = new Audio();
@@ -136,54 +220,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     a.addEventListener("play", onPlay);
     a.addEventListener("pause", onPause);
 
-    // YouTube IFrame engine (hidden official player for full popular songs)
-    const createYt = () => {
-      if (ytPlayerRef.current || !ytHostRef.current || !window.YT?.Player) return;
-      try {
-        ytPlayerRef.current = new window.YT.Player(ytHostRef.current, {
-          height: "2",
-          width: "2",
-          playerVars: { rel: 0, disablekb: 1 },
-          events: {
-            onReady: () => {
-              setYtReady(true);
-              try {
-                ytPlayerRef.current?.setVolume(Math.round(volumeRef.current * 100));
-                if (mutedRef.current) ytPlayerRef.current?.mute();
-              } catch { /* noop */ }
-              const pending = pendingYtRef.current;
-              pendingYtRef.current = null;
-              if (pending && engineRef.current === "youtube") {
-                try {
-                  ytPlayerRef.current?.loadVideoById(pending);
-                } catch { /* noop */ }
-              }
-            },
-            onStateChange: (e: { data: number }) => {
-              if (engineRef.current !== "youtube") return;
-              if (e.data === 1) setIsPlaying(true); // PLAYING
-              else if (e.data === 2) setIsPlaying(false); // PAUSED
-              else if (e.data === 0) advanceRef.current(true); // ENDED
-            },
-          },
-        });
-      } catch { /* noop */ }
-    };
-
-    if (window.YT?.Player) {
-      createYt();
-    } else {
-      const prev = window.onYouTubeIframeAPIReady;
-      window.onYouTubeIframeAPIReady = () => {
-        prev?.();
-        createYt();
-      };
-      const s = document.createElement("script");
-      s.src = "https://www.youtube.com/iframe_api";
-      s.async = true;
-      document.head.appendChild(s);
-    }
-
     return () => {
       a.pause();
       a.removeEventListener("timeupdate", onTime);
@@ -198,18 +234,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     engineRef.current = "youtube";
     audioRef.current?.pause();
     setProgress(0);
-    try {
-      if (ytPlayerRef.current?.loadVideoById) {
-        ytPlayerRef.current.loadVideoById(videoId);
-      } else {
+    // Instant UI feedback; corrected below if the YT engine can't start.
+    setIsPlaying(true);
+    void ensureYtPlayer().then((ok) => {
+      if (engineRef.current !== "youtube") return;
+      if (!ok) {
+        setIsPlaying(false);
+        return;
+      }
+      try {
+        if (ytPlayerRef.current?.loadVideoById) {
+          ytPlayerRef.current.loadVideoById(videoId);
+        } else {
+          pendingYtRef.current = videoId;
+        }
+      } catch {
         pendingYtRef.current = videoId;
       }
-    } catch {
-      pendingYtRef.current = videoId;
-    }
-    // YT events drive isPlaying; assume playing for instant UI feedback.
-    setIsPlaying(true);
-  }, []);
+    });
+  }, [ensureYtPlayer]);
 
   useEffect(() => {
     const a = audioRef.current;
