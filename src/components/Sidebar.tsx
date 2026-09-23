@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Home, Search, Plus, Heart, ListMusic, ArrowDownWideNarrow, Volume2 } from "lucide-react";
+import { Home, Search, Plus, Heart, ListMusic, ArrowDownWideNarrow, Volume2, PanelLeftClose } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { usePlayer } from "@/context/PlayerContext";
+import { useUI } from "@/context/UIContext";
 
 type Pl = { id: string; name: string; _count?: { tracks: number } };
 type Artist = { id: string; name: string; image: string };
@@ -15,6 +16,7 @@ export function Sidebar() {
   const router = useRouter();
   const sp = useSearchParams();
   const { isPlaying } = usePlayer();
+  const { leftOpen, setLeftOpen } = useUI();
   const [playlists, setPlaylists] = useState<Pl[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [chip, setChip] = useState<Chip>("all");
@@ -74,9 +76,13 @@ export function Sidebar() {
     }`;
 
   return (
-    <aside className="hidden w-[320px] shrink-0 flex-col gap-2 p-2 md:flex">
+    <aside
+      className={`hidden shrink-0 flex-col gap-2 overflow-hidden transition-all duration-300 ease-in-out md:flex ${
+        leftOpen ? "w-[320px] p-2 opacity-100" : "w-0 p-0 opacity-0"
+      }`}
+    >
       {/* nav box */}
-      <div className="rounded-lg bg-[#121212] px-3 py-4">
+      <div className="w-[304px] shrink-0 rounded-lg bg-[#121212] px-3 py-4">
         <nav className="space-y-2">
           <Link href="/" className={nav("/", pathname === "/")}>
             <Home size={24} /> Home
@@ -88,12 +94,15 @@ export function Sidebar() {
       </div>
 
       {/* library box */}
-      <div className="flex min-h-0 flex-1 flex-col rounded-lg bg-[#121212]">
+      <div className="flex min-h-0 w-[304px] shrink-0 flex-1 flex-col rounded-lg bg-[#121212]">
         <div className="flex items-center justify-between px-4 pb-1 pt-4">
-          <span className="text-base font-bold text-zinc-400">Your Library</span>
-          <div className="flex items-center gap-1">
+          <span className="whitespace-nowrap text-base font-bold text-zinc-400">Your Library</span>
+          <div className="flex shrink-0 items-center gap-1">
             <button onClick={create} className="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-bold text-zinc-300 hover:bg-white/10 hover:text-white" title="Create playlist">
               <Plus size={18} /> Create
+            </button>
+            <button onClick={() => setLeftOpen(false)} className="rounded-full p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white" title="Hide library" aria-label="Hide library">
+              <PanelLeftClose size={18} />
             </button>
           </div>
         </div>

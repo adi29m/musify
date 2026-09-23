@@ -9,11 +9,15 @@ import { formatPlays, formatTime } from "@/lib/audius";
 
 export function NowPlayingPanel() {
   const { current, npOpen, setNpOpen } = usePlayer();
-  if (!current || !npOpen) return null;
+  if (!current) return null;
 
   return (
-    <aside className="hidden w-[340px] shrink-0 p-2 pl-0 xl:block">
-      <div className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto rounded-lg bg-[#121212] p-4">
+    <aside
+      className={`hidden shrink-0 overflow-hidden transition-all duration-300 ease-in-out xl:block ${
+        npOpen ? "w-[340px] p-2 pl-0 opacity-100" : "w-0 p-0 opacity-0"
+      }`}
+    >
+      <div className="flex h-full min-h-0 w-[324px] flex-col gap-4 overflow-y-auto rounded-lg bg-[#121212] p-4">
         <div className="flex items-center justify-between">
           <span className="text-base font-bold text-zinc-300">Now playing</span>
           <button onClick={() => setNpOpen(false)} className="rounded-full p-1 text-zinc-400 hover:bg-white/10 hover:text-white" aria-label="Close now playing">

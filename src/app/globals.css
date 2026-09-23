@@ -30,6 +30,21 @@ body {
 
 input[type="range"] { cursor: pointer; }
 
+/* Day mode: the app is authored dark, so light theme is a full-page color
+   inversion. Artwork/media is inverted back so covers look correct. */
+html.light {
+  background: #fff;
+}
+html.light body {
+  filter: invert(1) hue-rotate(180deg);
+  background: #fff;
+}
+html.light img,
+html.light video,
+html.light iframe {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 /* animated equalizer bars (now-playing indicator) */
 @keyframes eq-bounce {
   0%, 100% { height: 4px; }

@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { ChevronLeft, ChevronRight, Search, User, Home } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, User, Home, Sun, Moon, PanelLeftOpen } from "lucide-react";
 import { useState } from "react";
 import { useMe } from "@/hooks/useMe";
 import { usePlayer } from "@/context/PlayerContext";
+import { useUI } from "@/context/UIContext";
 
 export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { me, loading, refresh } = useMe();
   const { current } = usePlayer();
+  const { leftOpen, toggleLeft, theme, toggleTheme } = useUI();
   const [q, setQ] = useState("");
   const [menu, setMenu] = useState(false);
 
@@ -49,6 +51,15 @@ export function TopBar() {
         <Home size={20} />
       </Link>
 
+      <button
+        onClick={toggleLeft}
+        aria-label={leftOpen ? "Hide library" : "Show library"}
+        title={leftOpen ? "Hide library" : "Show library"}
+        className="hidden shrink-0 place-items-center rounded-full bg-white/5 p-3 text-zinc-300 transition hover:text-white md:grid"
+      >
+        <PanelLeftOpen size={20} className={`transition-transform duration-300 ${leftOpen ? "" : "rotate-180"}`} />
+      </button>
+
       {(pathname?.startsWith("/search") || pathname === "/") && (
         <form
           className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-transparent bg-[#242424] px-3 py-2 focus-within:border-white sm:max-w-md sm:px-4"
@@ -70,6 +81,14 @@ export function TopBar() {
       )}
 
       <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+        <button
+          onClick={toggleTheme}
+          aria-label={theme === "dark" ? "Switch to day mode" : "Switch to night mode"}
+          title={theme === "dark" ? "Day mode" : "Night mode"}
+          className="grid shrink-0 place-items-center rounded-full bg-white/5 p-2.5 text-zinc-300 transition hover:text-white"
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
         {!loading && !me && (
           <>
             <Link href="/signup" className="hidden rounded-full px-3 py-2 text-sm font-bold text-zinc-300 hover:text-white min-[400px]:block sm:px-4">
