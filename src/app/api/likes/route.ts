@@ -12,6 +12,14 @@ export async function GET(req: NextRequest) {
     });
     return NextResponse.json({ liked: !!like });
   }
+  // Lightweight variant for the app-wide liked store: just IDs, one request.
+  if (req.nextUrl.searchParams.get("ids") === "1") {
+    const rows = await prisma.like.findMany({
+      where: { userId: user.id },
+      select: { trackId: true },
+    });
+    return NextResponse.json({ ids: rows.map((r) => r.trackId) });
+  }
   const likes = await prisma.like.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },

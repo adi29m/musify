@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePlayer } from "@/context/PlayerContext";
+import { usePlayer, useProgress } from "@/context/PlayerContext";
+import { useLiked } from "@/context/LikedContext";
 import { formatTime, type UiTrack } from "@/lib/audius";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Volume2, VolumeX, Heart,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { memo } from "react";
 
-export function TrackRow({ track, queue, index }: { track: UiTrack; queue: UiTrack[]; index: number }) {
+export const TrackRow = memo(function TrackRow({ track, queue, index }: { track: UiTrack; queue: UiTrack[]; index: number }) {
   const { current, isPlaying, playTracks } = usePlayer();
   const active = current?.id === track.id;
   return (
@@ -37,9 +38,9 @@ export function TrackRow({ track, queue, index }: { track: UiTrack; queue: UiTra
       </div>
     </div>
   );
-}
+});
 
-export function TrackCard({ track, queue }: { track: UiTrack; queue: UiTrack[] }) {
+export const TrackCard = memo(function TrackCard({ track, queue }: { track: UiTrack; queue: UiTrack[] }) {
   const { playTrack, current, isPlaying, toggle } = usePlayer();
   const active = current?.id === track.id;
   return (
@@ -63,39 +64,18 @@ export function TrackCard({ track, queue }: { track: UiTrack; queue: UiTrack[] }
       </Link>
     </div>
   );
-}
+});
 
 export function LikeButton({ track, small }: { track: UiTrack; small?: boolean }) {
-  const [liked, setLiked] = useState(false);
-  useEffect(() => {
-    fetch(`/api/likes?trackId=${track.id}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => setLiked(!!j?.liked))
-      .catch(() => {});
-  }, [track.id]);
-
-  async function toggleLike(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (liked) {
-      await fetch(`/api/likes?trackId=${track.id}`, { method: "DELETE" });
-      setLiked(false);
-    } else {
-      const r = await fetch("/api/likes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trackId: track.id, title: track.title, artist: track.artist,
-          artwork: track.artwork, genre: track.genre, duration: track.duration,
-        }),
-      });
-      if (r.ok) setLiked(true);
-      else if (r.status === 401) window.location.href = "/login";
-    }
-  }
+  const { isLiked, toggleLike } = useLiked();
+  const liked = isLiked(track.id);
 
   return (
     <button
-      onClick={toggleLike}
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleLike(track);
+      }}
       aria-label="Like"
       className={`${small ? "p-1" : "rounded-full border border-zinc-600 p-2"} ${liked ? "text-green-500" : "text-zinc-400 hover:text-white"}`}
     >
@@ -106,8 +86,11 @@ export function LikeButton({ track, small }: { track: UiTrack; small?: boolean }
 
 export function PlayerBar() {
   const p = usePlayer();
+  const { progress, duration, seek } = useProgress();
   const { current } = p;
   if (!current) return null;
+
+  const max = Math.max(duration, current?.duration || 0, 1);
 
   return (
     <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800 bg-black px-3 py-2">
@@ -145,14 +128,14 @@ export function PlayerBar() {
             </button>
           </div>
           <div className="flex w-full max-w-xl items-center gap-2 text-[11px] text-zinc-400">
-            <span>{formatTime(p.progress)}</span>
+            <span>{formatTime(progress)}</span>
             <input
-              type="range" min={0} max={Math.max(p.duration, p.current?.duration || 0, 1)} step={1}
-              value={Math.min(p.progress, Math.max(p.duration, 1))}
-              onChange={(e) => p.seek(Number(e.target.value))}
+              type="range" min={0} max={max} step={1}
+              value={Math.min(progress, max)}
+              onChange={(e) => seek(Number(e.target.value))}
               className="h-1 w-full accent-green-500"
             />
-            <span>{formatTime(p.duration || current.duration)}</span>
+            <span>{formatTime(duration || current.duration)}</span>
           </div>
         </div>
 
@@ -169,7 +152,7 @@ export function PlayerBar() {
       </div>
       {/* mobile progress */}
       <div className="h-1 w-full bg-zinc-800 sm:hidden">
-        <div className="h-full bg-green-500" style={{ width: `${p.duration ? (p.progress / p.duration) * 100 : 0}%` }} />
+        <div className="h-full bg-green-500" style={{ width: `${duration ? (progress / duration) * 100 : 0}%` }} />
       </div>
     </footer>
   );

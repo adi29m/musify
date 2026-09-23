@@ -10,8 +10,6 @@ type PlayerCtx = {
   index: number;
   current: UiTrack | null;
   isPlaying: boolean;
-  progress: number;
-  duration: number;
   volume: number;
   muted: boolean;
   shuffle: boolean;
@@ -21,14 +19,22 @@ type PlayerCtx = {
   toggle: () => void;
   next: () => void;
   prev: () => void;
-  seek: (sec: number) => void;
   setVolume: (v: number) => void;
   toggleMute: () => void;
   toggleShuffle: () => void;
   cycleRepeat: () => void;
 };
 
+// Updated ~4x/sec while audio plays. Kept in its own context so only the
+// player bar (progress slider) re-renders — not every track row/card.
+type ProgressCtx = {
+  progress: number;
+  duration: number;
+  seek: (sec: number) => void;
+};
+
 const Ctx = createContext<PlayerCtx | null>(null);
+const ProgressCx = createContext<ProgressCtx | null>(null);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -209,18 +215,33 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<PlayerCtx>(
     () => ({
-      queue, index, current, isPlaying, progress, duration, volume, muted,
-      shuffle, repeat, playTracks, playTrack, toggle, next, prev, seek,
+      queue, index, current, isPlaying, volume, muted,
+      shuffle, repeat, playTracks, playTrack, toggle, next, prev,
       setVolume, toggleMute, toggleShuffle, cycleRepeat,
     }),
-    [queue, index, current, isPlaying, progress, duration, volume, muted, shuffle, repeat, playTracks, playTrack, toggle, next, prev, seek, setVolume, toggleMute, toggleShuffle, cycleRepeat]
+    [queue, index, current, isPlaying, volume, muted, shuffle, repeat, playTracks, playTrack, toggle, next, prev, setVolume, toggleMute, toggleShuffle, cycleRepeat]
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  const progressValue = useMemo<ProgressCtx>(
+    () => ({ progress, duration, seek }),
+    [progress, duration, seek]
+  );
+
+  return (
+    <Ctx.Provider value={value}>
+      <ProgressCx.Provider value={progressValue}>{children}</ProgressCx.Provider>
+    </Ctx.Provider>
+  );
 }
 
 export function usePlayer(): PlayerCtx {
   const c = useContext(Ctx);
   if (!c) throw new Error("usePlayer must be used within PlayerProvider");
+  return c;
+}
+
+export function useProgress(): ProgressCtx {
+  const c = useContext(ProgressCx);
+  if (!c) throw new Error("useProgress must be used within PlayerProvider");
   return c;
 }

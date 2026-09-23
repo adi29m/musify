@@ -172,14 +172,15 @@ export async function getTrendingPlaylists(limit = 12): Promise<AudiusPlaylist[]
 export async function getPlaylist(id: string): Promise<{ meta: AudiusPlaylist; tracks: UiTrack[] } | null> {
   try {
     const pl = await getJson<AudiusPlaylist>(`/v1/playlists/${id}`, 600);
-    const ids = pl.playlist_contents?.track_ids?.map((t) => t.track) ?? [];
-    const tracks: UiTrack[] = [];
-    // Fetch in small batches to avoid hammering
-    for (const tid of ids.slice(0, 30)) {
-      const t = await getTrack(tid);
-      if (t) tracks.push(t);
+    const ids = (pl.playlist_contents?.track_ids?.map((t) => t.track) ?? []).slice(0, 30);
+    // Bounded parallelism: 30 sequential fetches took ~30x one RTT.
+    // 6 at a time keeps it fast without hammering the discovery node.
+    const out: UiTrack[] = [];
+    for (let i = 0; i < ids.length; i += 6) {
+      const batch = await Promise.all(ids.slice(i, i + 6).map((tid) => getTrack(tid)));
+      for (const t of batch) if (t) out.push(t);
     }
-    return { meta: pl, tracks };
+    return { meta: pl, tracks: out };
   } catch {
     return null;
   }
