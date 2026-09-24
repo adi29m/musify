@@ -12,12 +12,13 @@ export function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { me, loading, refresh } = useMe();
-  const { current } = usePlayer();
+  const { current, stop } = usePlayer();
   const { leftOpen, toggleLeft, theme, toggleTheme } = useUI();
   const [q, setQ] = useState("");
   const [menu, setMenu] = useState(false);
 
   async function logout() {
+    stop(); // silence music on logout
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {

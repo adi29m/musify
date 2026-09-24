@@ -23,6 +23,7 @@ type PlayerCtx = {
   toggleMute: () => void;
   toggleShuffle: () => void;
   cycleRepeat: () => void;
+  stop: () => void;
   npOpen: boolean;
   setNpOpen: (open: boolean) => void;
 };
@@ -426,6 +427,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleShuffle = useCallback(() => setShuffle((s) => !s), []);
+
+  // Full stop: silence both engines and clear the queue (used on logout).
+  const stop = useCallback(() => {
+    try {
+      audioRef.current?.pause();
+      if (audioRef.current) audioRef.current.currentTime = 0;
+    } catch { /* noop */ }
+    try {
+      ytPlayerRef.current?.pauseVideo();
+      ytPlayerRef.current?.stopVideo();
+    } catch { /* noop */ }
+    engineRef.current = null;
+    currentIdRef.current = null;
+    pendingYtRef.current = null;
+    setQueue([]);
+    setIndex(-1);
+    setIsPlaying(false);
+    setProgress(0);
+  }, []);
   const cycleRepeat = useCallback(
     () => setRepeat((r) => (r === "off" ? "all" : r === "all" ? "one" : "off")),
     []
@@ -435,9 +455,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     () => ({
       queue, index, current, isPlaying, volume, muted,
       shuffle, repeat, playTracks, playTrack, toggle, next, prev,
-      setVolume, toggleMute, toggleShuffle, cycleRepeat, npOpen, setNpOpen,
+      setVolume, toggleMute, toggleShuffle, cycleRepeat, stop, npOpen, setNpOpen,
     }),
-    [queue, index, current, isPlaying, volume, muted, shuffle, repeat, playTracks, playTrack, toggle, next, prev, setVolume, toggleMute, toggleShuffle, cycleRepeat, npOpen]
+    [queue, index, current, isPlaying, volume, muted, shuffle, repeat, playTracks, playTrack, toggle, next, prev, setVolume, toggleMute, toggleShuffle, cycleRepeat, stop, npOpen]
   );
 
   const progressValue = useMemo<ProgressCtx>(
