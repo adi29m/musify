@@ -7,6 +7,7 @@ import { formatTime, type UiTrack } from "@/lib/audius";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Volume2, VolumeX, Heart, PanelRight, ChevronDown, ChevronUp,
+  MoreHorizontal, ListMusic, Share, MonitorSpeaker
 } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AddToPlaylist } from "./AddToPlaylist";
@@ -239,70 +240,68 @@ export function PlayerBar() {
     {/* Mobile full-screen now playing — shuffle + repeat live here */}
     {expanded && (
       <div
-        className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#0a0a0a] px-5 pb-10 pt-4 text-white sm:hidden"
+        className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-gradient-to-b from-[#64614A] to-[#121212] px-6 pb-0 pt-12 text-white sm:hidden"
         role="dialog"
         aria-modal="true"
         aria-label={`Now playing: ${current.title} by ${current.artist}`}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between">
           <button
             onClick={() => setExpanded(false)}
-            className="rounded-full p-2 text-zinc-300 hover:bg-white/10 hover:text-white"
+            className="p-1 text-white hover:text-white"
             aria-label="Close now playing"
             autoFocus
           >
-            <ChevronDown size={24} />
+            <ChevronDown size={28} />
           </button>
-          <p className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Now playing</p>
-          <Link
-            href={`/track/${current.id}`}
-            onClick={() => setExpanded(false)}
-            className="rounded-full px-3 py-2 text-xs font-semibold text-zinc-300 hover:bg-white/10 hover:text-white"
-          >
-            Details
-          </Link>
+          <p className="text-[12px] font-bold tracking-widest text-white">LIKED SONGS</p>
+          <button className="p-1 text-white hover:text-white">
+            <MoreHorizontal size={24} />
+          </button>
         </div>
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={current.artwork}
           alt={current.title}
-          className="mx-auto aspect-square w-full max-w-sm rounded-lg object-cover shadow-2xl"
+          className="mx-auto mb-10 aspect-square w-full max-w-sm object-cover shadow-2xl"
         />
 
-        <div className="mx-auto mt-6 flex w-full max-w-sm items-start justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-sm items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-2xl font-extrabold">{current.title}</p>
-            <p className="mt-1 truncate text-base text-zinc-400">{current.artist}</p>
+            <p className="truncate text-2xl font-bold">{current.title}</p>
+            <p className="truncate text-base text-zinc-300">{current.artist}</p>
           </div>
-          <LikeButton track={current} />
+          <div className="text-green-500">
+            <LikeButton track={current} />
+          </div>
         </div>
 
-        <div className="mx-auto mt-4 w-full max-w-sm">
+        <div className="mx-auto mt-6 w-full max-w-sm">
           <input
             type="range" min={0} max={max} step={1}
             value={Math.min(progress, max)}
             onChange={(e) => seek(Number(e.target.value))}
-            className="h-1.5 w-full accent-white"
+            className="h-1 w-full accent-white"
             aria-label="Seek"
           />
-          <div className="mt-1 flex justify-between text-xs text-zinc-400">
+          <div className="mt-1 flex justify-between text-xs text-zinc-400 font-medium">
             <span>{formatTime(progress)}</span>
             <span>-{formatTime(Math.max((duration || current.duration || 0) - progress, 0))}</span>
           </div>
         </div>
 
-        <div className="mx-auto mt-2 flex w-full max-w-sm items-center justify-between">
+        <div className="mx-auto mt-4 flex w-full max-w-sm items-center justify-between">
           <button
             onClick={p.toggleShuffle}
-            className={p.shuffle ? "text-green-500" : "text-zinc-300 hover:text-white"}
+            className={p.shuffle ? "text-green-500" : "text-white"}
             aria-label={p.shuffle ? "Shuffle on" : "Shuffle off"}
             aria-pressed={p.shuffle}
           >
-            <Shuffle size={26} />
+            <Shuffle size={24} />
           </button>
           <button onClick={p.prev} className="text-white hover:scale-105" aria-label="Previous">
-            <SkipBack size={32} fill="currentColor" />
+            <SkipBack size={36} fill="currentColor" />
           </button>
           <button
             onClick={p.toggle}
@@ -312,34 +311,34 @@ export function PlayerBar() {
             {p.isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
           </button>
           <button onClick={p.next} className="text-white hover:scale-105" aria-label="Next">
-            <SkipForward size={32} fill="currentColor" />
+            <SkipForward size={36} fill="currentColor" />
           </button>
           <button
             onClick={p.cycleRepeat}
-            className={p.repeat !== "off" ? "text-green-500" : "text-zinc-300 hover:text-white"}
+            className={p.repeat !== "off" ? "text-green-500" : "text-white"}
             aria-label={repeatLabel}
           >
-            {p.repeat === "one" ? <Repeat1 size={26} /> : <Repeat size={26} />}
+            {p.repeat === "one" ? <Repeat1 size={24} /> : <Repeat size={24} />}
           </button>
         </div>
-        <p className="mt-1 text-center text-[11px] text-zinc-500" aria-live="polite">
-          Shuffle {p.shuffle ? "on" : "off"} • {repeatLabel}
-        </p>
 
-        <div className="mx-auto mt-6 flex w-full max-w-sm items-center gap-2">
-          <button onClick={p.toggleMute} className="shrink-0 text-zinc-300 hover:text-white" aria-label="Mute">
-            {p.muted || p.volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
-          </button>
-          <input
-            type="range" min={0} max={1} step={0.01} value={p.muted ? 0 : p.volume}
-            onChange={(e) => p.setVolume(Number(e.target.value))}
-            className="h-1 w-full accent-white"
-            aria-label="Volume"
-          />
+        <div className="mx-auto mt-6 flex w-full max-w-sm items-center justify-between text-white/80">
+          <button className="hover:text-white"><MonitorSpeaker size={20} /></button>
+          <div className="flex items-center gap-6">
+            <button className="hover:text-white"><Share size={20} /></button>
+            <button className="hover:text-white"><ListMusic size={20} /></button>
+          </div>
         </div>
 
-        <div className="mx-auto mt-6 w-full max-w-sm">
-          <AddToPlaylist track={current} />
+        {/* Lyrics card placeholder */}
+        <div className="mx-auto mt-8 flex w-full max-w-sm flex-1 flex-col rounded-t-xl bg-[#7C7A58] p-4 text-white shadow-xl">
+           <div className="flex items-center justify-between font-bold text-[15px]">
+             <span>Lyrics</span>
+             <div className="flex gap-4">
+               <button className="hover:text-white"><Share size={18} /></button>
+               <button className="hover:text-white"><ChevronUp size={22} /></button>
+             </div>
+           </div>
         </div>
       </div>
     )}
