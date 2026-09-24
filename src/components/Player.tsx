@@ -126,9 +126,16 @@ export function PlayerBar() {
     <>
     <footer className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800 bg-black px-2 py-2 sm:px-3">
       <div className="mx-auto flex max-w-screen-2xl items-center gap-2 sm:gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:w-1/3 sm:gap-3">
+        <div 
+          className="flex min-w-0 flex-1 items-center gap-2 sm:w-1/3 sm:gap-3 cursor-pointer sm:cursor-default"
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.innerWidth < 640) {
+              setExpanded(true);
+            }
+          }}
+        >
           <button
-            onClick={() => setExpanded(true)}
+            onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
             className="shrink-0 rounded sm:hidden"
             aria-label="Open now playing"
           >
