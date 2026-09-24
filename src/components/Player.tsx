@@ -7,7 +7,7 @@ import { formatTime, type UiTrack } from "@/lib/audius";
 import {
   Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Repeat1,
   Volume2, VolumeX, Heart, PanelRight, ChevronDown, ChevronUp,
-  MoreHorizontal, ListMusic, Share, MonitorSpeaker
+  MoreHorizontal, ListMusic, Share, MonitorSpeaker, Check, Plus
 } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AddToPlaylist } from "./AddToPlaylist";
@@ -92,6 +92,32 @@ export function LikeButton({ track, small }: { track: UiTrack; small?: boolean }
       className={`${small ? "p-1" : "rounded-full border border-zinc-600 p-2"} ${liked ? "text-green-500" : "text-zinc-400 hover:text-white"}`}
     >
       <Heart size={small ? 16 : 18} fill={liked ? "currentColor" : "none"} />
+    </button>
+  );
+}
+
+export function ExpandedLikeButton({ track }: { track: UiTrack }) {
+  const { isLiked, toggleLike } = useLiked();
+  const liked = isLiked(track.id);
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleLike(track);
+      }}
+      aria-label="Like"
+      className={liked ? "text-green-500" : "text-zinc-400"}
+    >
+      {liked ? (
+        <div className="grid h-8 w-8 place-items-center rounded-full bg-green-500 text-black">
+          <Check size={20} strokeWidth={3} />
+        </div>
+      ) : (
+        <div className="grid h-8 w-8 place-items-center rounded-full border-2 border-zinc-400">
+          <Plus size={18} strokeWidth={2.5} />
+        </div>
+      )}
     </button>
   );
 }
@@ -254,7 +280,7 @@ export function PlayerBar() {
           >
             <ChevronDown size={28} />
           </button>
-          <p className="text-[12px] font-bold tracking-widest text-white">LIKED SONGS</p>
+          <p className="text-[13px] font-semibold text-white">Liked Songs</p>
           <button className="p-1 text-white hover:text-white">
             <MoreHorizontal size={24} />
           </button>
@@ -272,8 +298,8 @@ export function PlayerBar() {
             <p className="truncate text-2xl font-bold">{current.title}</p>
             <p className="truncate text-base text-zinc-300">{current.artist}</p>
           </div>
-          <div className="text-green-500">
-            <LikeButton track={current} />
+          <div>
+            <ExpandedLikeButton track={current} />
           </div>
         </div>
 
@@ -291,24 +317,24 @@ export function PlayerBar() {
           </div>
         </div>
 
-        <div className="mx-auto mt-4 flex w-full max-w-sm items-center justify-between">
+        <div className="mx-auto mt-4 flex w-full max-w-sm items-center justify-between pb-8">
           <button
             onClick={p.toggleShuffle}
             className={p.shuffle ? "text-green-500" : "text-white"}
             aria-label={p.shuffle ? "Shuffle on" : "Shuffle off"}
             aria-pressed={p.shuffle}
           >
-            <Shuffle size={24} />
+            <Shuffle size={26} />
           </button>
           <button onClick={p.prev} className="text-white hover:scale-105" aria-label="Previous">
             <SkipBack size={36} fill="currentColor" />
           </button>
           <button
             onClick={p.toggle}
-            className="grid h-16 w-16 place-items-center rounded-full bg-white text-black hover:scale-105"
+            className="grid h-[72px] w-[72px] place-items-center rounded-full bg-white text-black hover:scale-105"
             aria-label={p.isPlaying ? "Pause" : "Play"}
           >
-            {p.isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
+            {p.isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
           </button>
           <button onClick={p.next} className="text-white hover:scale-105" aria-label="Next">
             <SkipForward size={36} fill="currentColor" />
@@ -318,27 +344,8 @@ export function PlayerBar() {
             className={p.repeat !== "off" ? "text-green-500" : "text-white"}
             aria-label={repeatLabel}
           >
-            {p.repeat === "one" ? <Repeat1 size={24} /> : <Repeat size={24} />}
+            {p.repeat === "one" ? <Repeat1 size={26} /> : <Repeat size={26} />}
           </button>
-        </div>
-
-        <div className="mx-auto mt-6 flex w-full max-w-sm items-center justify-between text-white/80">
-          <button className="hover:text-white"><MonitorSpeaker size={20} /></button>
-          <div className="flex items-center gap-6">
-            <button className="hover:text-white"><Share size={20} /></button>
-            <button className="hover:text-white"><ListMusic size={20} /></button>
-          </div>
-        </div>
-
-        {/* Lyrics card placeholder */}
-        <div className="mx-auto mt-8 flex w-full max-w-sm flex-1 flex-col rounded-t-xl bg-[#7C7A58] p-4 text-white shadow-xl">
-           <div className="flex items-center justify-between font-bold text-[15px]">
-             <span>Lyrics</span>
-             <div className="flex gap-4">
-               <button className="hover:text-white"><Share size={18} /></button>
-               <button className="hover:text-white"><ChevronUp size={22} /></button>
-             </div>
-           </div>
         </div>
       </div>
     )}
