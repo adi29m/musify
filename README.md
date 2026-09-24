@@ -17,7 +17,6 @@ npm install
 npx prisma db push
 npm run dev
 ```
-Open http://localhost:3000
 
 Login/signup to get likes + playlists (stored in Postgres).
 
