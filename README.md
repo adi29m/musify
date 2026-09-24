@@ -1,5 +1,9 @@
 # Musify — Spotify Clone (End to End)
 
+## 🌐 Live App
+
+**https://musify-adi29ms-projects.vercel.app** — open the link and play, no setup needed.
+
 Full-stack Spotify clone: Next.js + Tailwind + Prisma/Postgres + Audius free legal streaming.
 
 ## What it plays
