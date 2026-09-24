@@ -18,23 +18,27 @@ export function AddToPlaylist({ track }: { track: UiTrack }) {
 
   async function add(id: string) {
     setMsg("");
-    const r = await fetch(`/api/playlists/${id}/tracks`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        trackId: track.id, title: track.title, artist: track.artist,
-        artwork: track.artwork, genre: track.genre, duration: track.duration,
-        source: track.source === "youtube" ? "youtube" : "audius",
-        youtubeId: track.youtubeId ?? null,
-      }),
-    });
-    if (r.ok) {
-      setMsg("Added!");
-      setTimeout(() => setOpen(false), 800);
-    } else if (r.status === 401) {
-      window.location.href = "/login";
-    } else {
-      setMsg("Failed to add");
+    try {
+      const r = await fetch(`/api/playlists/${id}/tracks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trackId: track.id, title: track.title, artist: track.artist,
+          artwork: track.artwork, genre: track.genre, duration: track.duration,
+          source: track.source === "youtube" ? "youtube" : "audius",
+          youtubeId: track.youtubeId ?? null,
+        }),
+      });
+      if (r.ok) {
+        setMsg("Added!");
+        setTimeout(() => setOpen(false), 800);
+      } else if (r.status === 401) {
+        window.location.href = "/login";
+      } else {
+        setMsg("Failed to add");
+      }
+    } catch {
+      setMsg("Network error — try again");
     }
   }
 

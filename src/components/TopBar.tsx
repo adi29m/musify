@@ -18,7 +18,11 @@ export function TopBar() {
   const [menu, setMenu] = useState(false);
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      /* offline — still clear local state below */
+    }
     await refresh();
     router.refresh();
   }

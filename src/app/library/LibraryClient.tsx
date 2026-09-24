@@ -43,7 +43,7 @@ export function LibraryClient() {
     fetch("/api/auth/me").then((r) => r.json()).then((j) => {
       if (!j.user) router.push("/login");
       else setMe(j.user);
-    });
+    }).catch(() => {});
     fetch("/api/likes").then((r) => (r.ok ? r.json() : { likes: [] })).then((j) => setLikes(j.likes ?? []));
     fetch("/api/playlists").then((r) => (r.ok ? r.json() : { playlists: [] })).then(async (j) => {
       const list = j.playlists ?? [];
@@ -62,7 +62,8 @@ export function LibraryClient() {
     if (activePlaylist) {
       fetch(`/api/playlists/${activePlaylist}`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((j) => setDetail(j?.playlist ?? null));
+        .then((j) => setDetail(j?.playlist ?? null))
+        .catch(() => setDetail(null));
     } else setDetail(null);
   }, [activePlaylist]);
 
