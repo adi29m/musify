@@ -304,14 +304,29 @@ export function PlayerBar() {
         </div>
 
         <div className="mx-auto mt-6 w-full max-w-sm">
-          <input
-            type="range" min={0} max={max} step={1}
-            value={Math.min(progress, max)}
-            onChange={(e) => seek(Number(e.target.value))}
-            className="h-1 w-full accent-white"
-            aria-label="Seek"
-          />
-          <div className="mt-1 flex justify-between text-xs text-zinc-400 font-medium">
+          <div className="group relative flex h-4 w-full items-center">
+            <input
+              type="range" min={0} max={max} step={1}
+              value={Math.min(progress, max)}
+              onChange={(e) => seek(Number(e.target.value))}
+              className="absolute z-10 h-full w-full cursor-pointer opacity-0"
+              aria-label="Seek"
+            />
+            {/* Unfilled track */}
+            <div className="pointer-events-none absolute h-1 w-full rounded-full bg-white/30">
+              {/* Filled track */}
+              <div 
+                className="h-full rounded-full bg-white" 
+                style={{ width: `${max > 0 ? (Math.min(progress, max) / max) * 100 : 0}%` }}
+              />
+            </div>
+            {/* Thumb */}
+            <div 
+              className="pointer-events-none absolute h-3 w-3 -ml-1.5 rounded-full bg-white shadow-sm"
+              style={{ left: `${max > 0 ? (Math.min(progress, max) / max) * 100 : 0}%` }}
+            />
+          </div>
+          <div className="mt-1 flex justify-between text-xs font-medium text-zinc-400">
             <span>{formatTime(progress)}</span>
             <span>-{formatTime(Math.max((duration || current.duration || 0) - progress, 0))}</span>
           </div>
