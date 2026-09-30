@@ -1,0 +1,7 @@
+# Production uses Vercel-managed environment variables, not local secret files.
+.env
+.env.*
+.git
+.vercel
+.next
+node_modules
