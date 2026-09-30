@@ -5,6 +5,23 @@ now have RLS enabled, with no client role grants. Actual zero-row read attempts
 under `anon` and `authenticated` were denied. The server's `postgres` role
 retains access. No existing user records were modified by the security SQL.
 
+Production verification passed on deployment
+`dpl_3FjjBsuCgnVyA8FmsKeLNzUixmhh` (code commit `3700c8e`): signup, login,
+logout, secure cookie flags, forged-token rejection, likes, playlist/track
+changes, and isolation between two accounts. Both generated test accounts and
+their saved data were removed afterward. The test also confirmed that the live
+app and database verification connection refer to the same database.
+
+The local production build, Vercel production build, TypeScript check, focused
+ESLint checks, and all six session-security tests passed. The deployed login
+page rendered successfully in the browser. No public views, materialized views,
+or foreign tables were found, and `postgres` has no default client table grants
+in `public` or globally. Supabase's dashboard Advisor was not rerun because the
+browser was not signed in; the actual RLS and privilege checks ran directly.
+
+Local `.env` files are now explicitly excluded from Vercel uploads. The final
+production build uses Vercel's configured environment variables.
+
 Musify accesses PostgreSQL through server-side Prisma. Login uses bcrypt password
 hashes in `public."User"` and a custom JWT cookie. It does not use Supabase Auth or
 the Supabase Data API. Supabase `auth.uid()` policies therefore do not correspond
@@ -46,7 +63,8 @@ to this app's sessions.
    It intentionally adds no client policies: all app access goes through the
    server, which checks the signed-in user's ownership. If any table is missing
    or a statement fails, the transaction does not apply a partial fix.
-4. As optional additional hardening, since this app solely uses Prisma, disable the **Data API** in Supabase's
+4. As optional additional hardening, since this app solely uses Prisma, disable
+   the **Data API** in Supabase's
    API Settings, provided no other app or integration uses it. Supabase's Prisma
    guide recommends this configuration. This does not disable PostgreSQL. This
    setting was not changed: dashboard sign-in is required, while the table-level
