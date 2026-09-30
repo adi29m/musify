@@ -14,7 +14,7 @@ Full-stack Spotify clone: Next.js + Tailwind + Prisma/Postgres + Audius free leg
 ```bash
 npm install
 # put your Postgres connection string in .env as DATABASE_URL
-npx prisma db push
+npm run db:push
 npm run dev
 ```
 
@@ -37,8 +37,29 @@ Env vars required on Vercel: `DATABASE_URL` (Supabase direct connection string),
 `JWT_SECRET` (long random string). Set with `vercel env add`, then:
 
 ```bash
-npx prisma db push   # run once against the production DATABASE_URL to create tables
+npm run db:push      # creates tables and applies/verifies database security
 npx vercel --prod
 ```
 
 Build command on Vercel: `prisma generate && next build` (from `package.json`).
+
+## Database security
+
+The app uses server-side Prisma and its own JWT sessions. The four app tables
+must have Row Level Security enabled and no grants to Supabase's `anon` or
+`authenticated` roles. `npm run db:push` reapplies and verifies this protection
+after schema changes, using the same environment precedence as Next.js. The
+server database role must own the tables or have BYPASSRLS.
+
+- `npm run db:security` checks live RLS, client permissions, and denied reads.
+- `npm run db:secure` applies the transaction and then verifies protection.
+- `npm run test:security` tests session security without connecting to a database.
+- `npm run test:deployment -- https://your-app.vercel.app` checks deployed auth
+  and ownership using two temporary accounts, then removes those fixtures from
+  the configured database. Use it only with the matching app/database pair.
+
+Set a private, random `JWT_SECRET`; authentication refuses a missing secret or
+the old development default. Database and authentication modules are marked
+server-only to prevent accidental browser imports.
+
+See [the security notes](prisma/security/README.md) for details and SQL.

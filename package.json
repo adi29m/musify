@@ -7,8 +7,12 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "test:security": "node --test tests/auth.test.cjs",
+    "test:deployment": "node scripts/verify-deployment.cjs",
+    "db:push": "node scripts/db-push.cjs",
+    "db:generate": "prisma generate",
+    "db:security": "node scripts/db-security.cjs",
+    "db:secure": "node scripts/db-security.cjs --apply"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -18,7 +22,8 @@
     "next": "16.3.6",
     "prisma": "^5.22.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
